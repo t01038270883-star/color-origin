@@ -2,7 +2,7 @@
 // Cache-first for the app shell so the installed app opens instantly and works offline.
 // Everything else (e.g. the Google Fonts request) passes straight through to the network.
 
-var CACHE_NAME = 'color-origin-v2';
+var CACHE_NAME = 'color-origin-v3';
 var SHELL_FILES = [
   './',
   './index.html',
@@ -11,7 +11,8 @@ var SHELL_FILES = [
   './icons/icon-512.png',
   './icons/icon-512-maskable.png',
   './icons/apple-touch-icon.png',
-  './assets/logo.png'
+  './assets/logo.png',
+  './lib/html2canvas.min.js'
 ];
 
 self.addEventListener('install', function(event){
