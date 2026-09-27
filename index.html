@@ -238,6 +238,36 @@
     .source-overlay{ opacity:.85; font-size:9px; right:44px; }
     #stage-detail .pane-left{ padding-top: 66px; }
   }
+
+  /* ---------------- App-only: splash screen ---------------- */
+  .splash-screen{
+    position:fixed; inset:0; z-index:9999;
+    background:#fff;
+    display:flex; align-items:center; justify-content:center;
+    transition: opacity .5s ease;
+  }
+  .splash-screen.hide{ opacity:0; pointer-events:none; }
+  .splash-logo{ width:58%; max-width:320px; height:auto; }
+
+  /* ---------------- App-only: bottom bar ---------------- */
+  .stage{ padding-bottom:60px; }
+  .bottom-bar{
+    position:fixed; left:0; right:0; bottom:0; z-index:60;
+    height:60px;
+    padding-bottom: env(safe-area-inset-bottom);
+    background:#fff; border-top:1px solid #000;
+    display:flex; align-items:stretch; justify-content:space-around;
+  }
+  .bar-btn{
+    flex:1; background:none; border:none; cursor:pointer;
+    display:flex; align-items:center; justify-content:center;
+    color:#000; padding:0;
+  }
+  .bar-btn svg{ width:22px; height:22px; }
+  .bar-btn:active{ opacity:.45; }
+  .bar-btn-lang{
+    font-family:'Space Mono', monospace; font-size:13px; font-weight:700; letter-spacing:.06em;
+  }
 </style>
 
 <input type="file" id="fileInput" accept="image/*" hidden>
@@ -298,6 +328,30 @@
     <div id="marksDetail"></div>
   </div>
 </div>
+
+<!-- ================= App-only: splash screen ================= -->
+<div class="splash-screen" id="splashScreen">
+  <img class="splash-logo" src="assets/logo.png" alt="Chroma Garden">
+</div>
+
+<!-- ================= App-only: bottom bar ================= -->
+<input type="file" id="cameraInput" accept="image/*" capture="environment" hidden>
+<nav class="bottom-bar" id="appBottomBar">
+  <button type="button" class="bar-btn" id="barCameraBtn" aria-label="Camera">
+    <svg viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M4 8h3l1.5-2h7L17 8h3a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z"></path>
+      <circle cx="12" cy="13" r="3.4"></circle>
+    </svg>
+  </button>
+  <button type="button" class="bar-btn" id="barGalleryBtn" aria-label="Gallery">
+    <svg viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+      <rect x="3.5" y="4.5" width="17" height="15" rx="1.2"></rect>
+      <circle cx="8.5" cy="9.5" r="1.6"></circle>
+      <path d="M4 16.5l4.5-4.5 3 3 3.5-4 5 5.5"></path>
+    </svg>
+  </button>
+  <button type="button" class="bar-btn bar-btn-lang" id="barLangBtn" aria-label="Language">KO</button>
+</nav>
 
 <script>
 (function(){
@@ -822,6 +876,8 @@ var PIGMENT_DICTIONARY = [{"id":"ivory","name":"Ivory","nameKo":"아이보리","
     document.documentElement.lang = lang;
     langEnBtn.classList.toggle('active', lang === 'en');
     langKoBtn.classList.toggle('active', lang === 'ko');
+    var barLangBtnEl = document.getElementById('barLangBtn');
+    if(barLangBtnEl) barLangBtnEl.textContent = (lang === 'ko') ? 'EN' : 'KO';
     renderSentence();
     renderSources();
     if(!stageDetail.hidden){
@@ -1269,8 +1325,7 @@ var PIGMENT_DICTIONARY = [{"id":"ivory","name":"Ivory","nameKo":"아이보리","
     return true;
   }
 
-  fileInput.addEventListener('change', function(e){
-    var file = e.target.files && e.target.files[0];
+  function handleUploadedFile(file){
     if(!file) return;
     var reader = new FileReader();
     reader.onload = function(ev){
@@ -1284,12 +1339,54 @@ var PIGMENT_DICTIONARY = [{"id":"ivory","name":"Ivory","nameKo":"아이보리","
       detailPhoto.src = url;
     };
     reader.readAsDataURL(file);
+  }
+
+  fileInput.addEventListener('change', function(e){
+    handleUploadedFile(e.target.files && e.target.files[0]);
   });
 
   if(mainPhoto.complete && mainPhoto.naturalWidth){
     computeAllHex(mainPhoto);
   } else {
     mainPhoto.addEventListener('load', function(){ computeAllHex(mainPhoto); });
+  }
+
+  /* ---------------- App-only: splash screen ---------------- */
+  var splashScreen = document.getElementById('splashScreen');
+  if(splashScreen){
+    setTimeout(function(){
+      splashScreen.classList.add('hide');
+      setTimeout(function(){
+        if(splashScreen.parentNode) splashScreen.parentNode.removeChild(splashScreen);
+      }, 550);
+    }, 1200);
+  }
+
+  /* ---------------- App-only: bottom bar ---------------- */
+  var cameraInput = document.getElementById('cameraInput');
+  var barCameraBtn = document.getElementById('barCameraBtn');
+  var barGalleryBtn = document.getElementById('barGalleryBtn');
+  var barLangBtn = document.getElementById('barLangBtn');
+
+  if(barLangBtn){
+    barLangBtn.textContent = (LANG === 'ko') ? 'EN' : 'KO';
+  }
+
+  if(barCameraBtn && cameraInput){
+    barCameraBtn.addEventListener('click', function(){ cameraInput.click(); });
+    cameraInput.addEventListener('change', function(e){
+      handleUploadedFile(e.target.files && e.target.files[0]);
+    });
+  }
+
+  if(barGalleryBtn){
+    barGalleryBtn.addEventListener('click', function(){ fileInput.click(); });
+  }
+
+  if(barLangBtn){
+    barLangBtn.addEventListener('click', function(){
+      setLang(LANG === 'ko' ? 'en' : 'ko');
+    });
   }
 })();
 </script>
